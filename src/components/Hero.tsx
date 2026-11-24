@@ -1,5 +1,5 @@
 import React from 'react';
-import { motion } from 'motion/react';
+import { motion } from 'framer-motion';
 import { ArrowDown, Sparkles, ChevronRight, ShieldCheck, Zap } from 'lucide-react';
 
 interface HeroProps {

@@ -33,7 +33,7 @@ flowchart TD
 | **Phase 1** | Security Scanning | **Gitleaks**<br>**OSV-Scanner**<br>**Semgrep SAST** | • Secret detection (hardcoded keys)<br>• Open-source vulnerability scanning<br>• Static Application Security Testing for React/TS |
 | **Phase 2** | Code Quality | **TypeScript (`tsc`)** | Strict type-checking (`tsc --noEmit`) |
 | **Phase 3** | Software Testing | **Vitest** | 25 unit tests covering car data integrity, filter logic, and UI rendering |
-| **Phase 4** | Build & Push | **Docker & Docker Hub** | Multi-stage Node 22 Alpine build $\rightarrow$ Nginx Alpine production image pushed to Docker Hub |
+| **Phase 4** | Build & Push | **Docker & Docker Hub** | Multi-stage Node 16 Alpine build $\rightarrow$ Nginx Alpine production image pushed to Docker Hub |
 | **Phase 5** | IaC Deployment | **Terraform** | Deploys container using `kreuzwerker/docker` provider on port `3000` |
 | **Phase 6** | DAST Scan | **OWASP ZAP** | Dynamic Application Security Testing baseline scan against `http://127.0.0.1:3000` |
 | **Phase 7** | Cleanup | **Terraform Destroy** | Tears down test container after DAST scanning |
@@ -139,7 +139,7 @@ To enable Phase 4 (Build & Push), configure the following repository secrets in 
 │   ├── main.tf                # Docker provider infrastructure definition
 │   ├── variables.tf           # Terraform variables (vm_ip, ports, images)
 │   └── outputs.tf             # Outputs (URL, container ID)
-├── Dockerfile                 # Multi-stage build (Node 22 Alpine -> Nginx Alpine)
+├── Dockerfile                 # Multi-stage build (Node 16 Alpine -> Nginx Alpine)
 ├── nginx.conf                 # SPA routing & Nginx security headers
 ├── vitest.config.ts           # Vitest testing configuration
 └── package.json               # Dependencies & scripts

@@ -53,7 +53,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: 📦 Install Dependencies
@@ -105,7 +105,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: 📦 Install Dependencies
@@ -127,7 +127,7 @@ jobs:
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version-file: '.nvmrc'
           cache: 'npm'
 
       - name: 📦 Install Dependencies
@@ -258,6 +258,82 @@ jobs:
           echo "| Image | \`${{ secrets.DOCKERHUB_USERNAME }}/motor-x:latest\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Container Port | \`3000\` |" >> $GITHUB_STEP_SUMMARY
           echo "| Status | ✅ Running |" >> $GITHUB_STEP_SUMMARY
+
+  # ════════════════════════════════════════════════════════════
+  # PHASE 5B: Deploy to Google Cloud via Terraform (Live Hosting)
+  # Requires GitHub Secret: GCP_SA_KEY (Service Account JSON)
+  # Optional Secret: GCP_PROJECT_ID (defaults to terraform-learning-514508)
+  # ════════════════════════════════════════════════════════════
+  deploy-gcp:
+    name: ☁️ Deploy to GCP (Terraform)
+    needs: [build]
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout Code
+        uses: actions/checkout@v4
+
+      - name: 🔎 Check GCP Credentials Secret
+        id: check_gcp
+        env:
+          HAS_GCP_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+        run: |
+          if [ "$HAS_GCP_KEY" = "true" ]; then
+            echo "enabled=true" >> $GITHUB_OUTPUT
+          else
+            echo "enabled=false" >> $GITHUB_OUTPUT
+            echo "### ☁️ GCP Deployment Skipped" >> $GITHUB_STEP_SUMMARY
+            echo "Add the \`GCP_SA_KEY\` repository secret (GCP Service Account JSON) to enable automatic Google Cloud deployment." >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: 🔐 Authenticate to Google Cloud
+        if: steps.check_gcp.outputs.enabled == 'true'
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: 🔧 Setup Terraform
+        if: steps.check_gcp.outputs.enabled == 'true'
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: 1.6.6
+
+      - name: 📦 Terraform Init (GCP)
+        if: steps.check_gcp.outputs.enabled == 'true'
+        working-directory: terraform/gcp
+        run: terraform init
+
+      - name: 🔄 Import Existing GCP Resources (if already created)
+        if: steps.check_gcp.outputs.enabled == 'true'
+        working-directory: terraform/gcp
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'terraform-learning-514508' }}
+        run: |
+          terraform import -var="project_id=$PROJECT_ID" google_compute_firewall.motor_x_http "projects/$PROJECT_ID/global/firewalls/motor-x-vm-allow-http" || true
+          terraform import -var="project_id=$PROJECT_ID" google_compute_instance.motor_x "projects/$PROJECT_ID/zones/asia-south1-a/instances/motor-x-vm" || true
+
+      - name: 🚀 Terraform Apply (GCP)
+        if: steps.check_gcp.outputs.enabled == 'true'
+        working-directory: terraform/gcp
+        env:
+          PROJECT_ID: ${{ secrets.GCP_PROJECT_ID || 'terraform-learning-514508' }}
+        run: |
+          terraform apply -auto-approve \
+            -var="project_id=$PROJECT_ID" \
+            -var="image=${{ secrets.DOCKERHUB_USERNAME }}/motor-x:latest" \
+            -var="deploy_rev=${{ github.sha }}"
+
+      - name: 📝 GCP Deploy Summary
+        if: steps.check_gcp.outputs.enabled == 'true'
+        working-directory: terraform/gcp
+        run: |
+          APP_URL=$(terraform output -raw app_url)
+          echo "### ☁️ Google Cloud Deployment Summary" >> $GITHUB_STEP_SUMMARY
+          echo "| Property | Value |" >> $GITHUB_STEP_SUMMARY
+          echo "|----------|-------|" >> $GITHUB_STEP_SUMMARY
+          echo "| Live URL | $APP_URL |" >> $GITHUB_STEP_SUMMARY
+          echo "| Image | \`${{ secrets.DOCKERHUB_USERNAME }}/motor-x:latest\` |" >> $GITHUB_STEP_SUMMARY
+          echo "| Status | ✅ Deployed to GCP Compute Engine |" >> $GITHUB_STEP_SUMMARY
 
   # ════════════════════════════════════════════════════════════
   # PHASE 6: DAST — "Dynamic Application Security Testing"
