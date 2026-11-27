@@ -218,9 +218,9 @@ jobs:
   # PHASE 5: Deploy via Terraform — "Infrastructure as Code"
   # ════════════════════════════════════════════════════════════
   deploy:
-    name: 🚀 Deploy via Terraform (Local Vagrant)
+    name: 🚀 Deploy via Terraform
     needs: [build]
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Code
         uses: actions/checkout@v4
@@ -381,7 +381,7 @@ jobs:
   # ════════════════════════════════════════════════════════════
   dast:
     name: 🧪 DAST — OWASP ZAP
-    needs: [deploy]
+    needs: [deploy, deploy-gcp]
     runs-on: ubuntu-latest
     steps:
       - name: 📥 Checkout Code

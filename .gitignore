@@ -12,3 +12,4 @@ coverage/
 *.tfstate
 *.tfstate.*
 semgrep-report.json
+.vagrant/
