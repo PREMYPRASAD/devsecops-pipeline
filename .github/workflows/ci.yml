@@ -235,6 +235,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
+          terraform_wrapper: false
 
       - name: 🧹 Clean Previous Container on Port 8000
         run: |
@@ -396,6 +397,7 @@ jobs:
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.6.6
+          terraform_wrapper: false
 
       - name: 📦 Terraform Init
         working-directory: terraform
