@@ -6,3 +6,9 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Terraform local state & provider cache
+**/.terraform/
+*.tfstate
+*.tfstate.*
+semgrep-report.json

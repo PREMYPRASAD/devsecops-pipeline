@@ -26,5 +26,5 @@ variable "container_name" {
 variable "external_port" {
   type        = number
   description = "Host port to map to container's port 80"
-  default     = null
+  default     = 8000
 }
